@@ -1,13 +1,7 @@
-# Sample Hardhat Project
+# Sample BookStore Decentralize Application Project
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+This project demonstrates a simple DApp, where owner gets to add books, and anyone can access the book by its title
 
-Try running some of the following tasks:
-
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
-```
+Used HTML and CSS for the frontend
+Used Hardhat, and Ethereum Runtime Environment to write, test, deploy, and verify smart contract
+Javascript/Etherjs to interact with the smart contract from the frontend.
