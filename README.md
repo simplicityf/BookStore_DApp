@@ -1,4 +1,4 @@
-# Sample BookStore Decentralize Application Project
+# Simple BookStore Decentralize Application Project
 
 This project demonstrates a simple DApp, where owner gets to add books, and anyone can access the book by its title
 
