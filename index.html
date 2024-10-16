@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="DApp" author="Nasir Azeezat Omobolanle" />
+    <title>BookStore DApp</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="container">
+        <h1>Book Store App</h1>
+
+        <div>
+            <h2>Add New Book</h2>
+            <label for="title">Title:</label>
+            <input type="text" id="title" required />
+            <label for="author">Author:</label>
+            <input type="text" id="author" required />
+            <label for="copies">Number of Copies:</label>
+            <input type="number" id="copies" required />
+            <button onclick="addBook()">Add Book</button>
+        </div>
+
+        <div>
+            <h2>Get Book Details</h2>
+            <label for="booktitle">Book Title:</label>
+            <input type="text" id="booktitle" required />
+            <button onclick="getBook()">Get Details</button>
+            <div id="bookDetails"></div>
+        </div>
+
+        <div>
+            <h2>Available Books</h2>
+            <button onclick="loadBooks()">Show Available Books</button>
+            <div id="bookList"></div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"
+        type="application/javascript"></script>
+
+    <script>
+        //Calling functions globally
+        let bookLibraryContract;
+        let signer;
+        let provider;
+
+        async function init() {
+            // Check if MetaMask is installed
+            if (typeof window.ethereum !== 'undefined') {
+                //console.log('MetaMask is installed!');
+
+                // Initialize provider and signer
+
+                const contractAddress = "0x67Abe24d90a419b2A1b4D91c687D7fe4d9E2d778";
+
+                const contractABI = [{ "inputs": [], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "string", "name": "title", "type": "string" }, { "indexed": false, "internalType": "string", "name": "author", "type": "string" }, { "indexed": false, "internalType": "uint256", "name": "copies", "type": "uint256" }], "name": "BookAdded", "type": "event" }, { "inputs": [{ "internalType": "string", "name": "_title", "type": "string" }, { "internalType": "string", "name": "_author", "type": "string" }, { "internalType": "uint256", "name": "_copies", "type": "uint256" }], "name": "addBook", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "bookCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "string", "name": "_title", "type": "string" }], "name": "getBook", "outputs": [{ "internalType": "string", "name": "title", "type": "string" }, { "internalType": "string", "name": "author", "type": "string" }, { "internalType": "uint256", "name": "copies", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }];
+
+
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+                await provider.send("eth_requestAccounts", []); // Request account access
+                signer = provider.getSigner();
+
+                // Initialize contract
+                bookLibraryContract = new ethers.Contract(contractAddress, contractABI, signer);
+
+            } else {
+                alert("Please install MetaMask to use this DApp!");
+            }
+        }
+
+        // Call init() on page load
+        window.onload = init;
+
+        // Function to add a new book to the contract
+        async function addBook() {
+            const title = document.getElementById("title").value;
+            const author = document.getElementById("author").value;
+            const copies = document.getElementById("copies").value;
+
+            if (!title || !author || !copies) {
+                alert("All fields are required!");
+                return;
+            }
+
+            try {
+                // console.log("Preparing to add book:", title, author, copies);
+                // console.log("Signer address:", await signer.getAddress());
+
+                const tx = await bookLibraryContract.addBook(title, author, copies);
+                // console.log("Transaction sent:", tx);
+                await tx.wait(); // Wait for transaction to be mined
+                alert("Book added successfully!");
+            } catch (error) {
+                console.error("Error adding book:", error);
+                alert("Error adding book. Please try again.");
+            }
+        }
+
+        // Function to get book details by title
+        // Function to get book details by title
+        async function getBook() {
+            const bookTitle = document.getElementById("booktitle").value;
+
+            if (!bookTitle) {
+                alert("Please enter a book title!");
+                return;
+            }
+
+            try {
+                // Fetch book details from the contract
+                const bookDetails = await bookLibraryContract.getBook(bookTitle);
+
+                // console.log("Title:", bookDetails[0]);
+                // console.log("Author:", bookDetails[1]);
+                // console.log("Number of Copies:", bookDetails[2]);
+
+                // Check if the book exists (i.e., if title is not empty)
+                if (!bookDetails[0] || bookDetails[0] === "") {
+                    // If the title is empty, the book was not found
+                    alert("Book not found! Please check the title and try again.");
+                    return;
+                }
+
+                // Display the book details in the HTML
+                document.getElementById("bookDetails").innerHTML = `
+            <p>Title: ${bookDetails[0]}</p>
+            <p>Author: ${bookDetails[1]}</p>
+            <p>Copies: ${bookDetails[2]}</p>
+        `;
+            } catch (error) {
+                console.error("Error fetching book details:", error);
+                alert("Error fetching book details. Please try again.");
+            }
+        }
+
+        // Array to store the list of books on the frontend
+        let bookList = [];
+
+        // Function to listen for BookAdded events
+        async function listenForBookAddedEvents() {
+            bookLibraryContract.on("BookAdded", (title, author, copies) => {
+                console.log("Book added event detected:", title, author, copies);
+                // Add the new book to the list
+                bookList.push({ title, author, copies });
+                // Update the frontend with the new book list
+                displayBooks();
+            });
+        }
+
+        // Function to display books on the frontend
+        function displayBooks() {
+            const bookListDiv = document.getElementById("bookList");
+            bookListDiv.innerHTML = ""; // Clear the current list
+
+            bookList.forEach((book, index) => {
+                // Create a new element for each book
+                const bookElement = document.createElement("div");
+                bookElement.innerHTML = `
+            <p><strong>Title:</strong> ${book.title}</p>
+            <p><strong>Author:</strong> ${book.author}</p>
+            <p><strong>Copies:</strong> ${book.copies}</p>
+            <hr>
+        `;
+                bookListDiv.appendChild(bookElement);
+            });
+        }
+
+        // Function to load books (if any have been added)
+        function loadBooks() {
+            if (bookList.length === 0) {
+                alert("No books have been added yet.");
+            } else {
+                displayBooks();
+            }
+        }
+
+        // Initialize the event listener on page load
+        window.onload = async () => {
+            await init(); // Initialize the contract and signer
+            listenForBookAddedEvents(); // Start listening for BookAdded events
+        };
+
+    </script>
+</body>
+
+</html>

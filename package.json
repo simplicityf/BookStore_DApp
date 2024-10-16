@@ -1,0 +1,25 @@
+{
+  "name": "bookstoredapp",
+  "version": "1.0.0",
+  "description": "A decentralize application",
+  "main": "index.js",
+  "scripts": {
+    "dev": "lite-server"
+  },
+  "keywords": [
+    "DApp",
+    "BookStore"
+  ],
+  "author": "Nasir Azeezat Omobolanle",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.13"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.11",
+    "ethers": "^6.13.4",
+    "lite-server": "^2.6.1"
+  }
+}
